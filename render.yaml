@@ -1,10 +1,5 @@
 # Smart Shuttle Backend — Render Blueprint
 # https://render.com/docs/blueprint-spec
-#
-# After first deploy, set these env vars in Render Dashboard:
-#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DATABASE_URL, FRONTEND_URL, QR_SECRET
-#
-# Then run: npx prisma migrate deploy (via Render Shell)
 
 services:
   - type: web
@@ -14,8 +9,9 @@ services:
     branch: main
     plan: free
 
-    buildCommand: npm run build
-    startCommand: npm start
+    rootDir: backend
+    buildCommand: npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && node dist/server.js
     healthCheckPath: /api/health
 
     env: production
