@@ -1,0 +1,398 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ORGANIZER
+  DRIVER
+  EMPLOYEE
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+  OUT_OF_SERVICE
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  CANCELLED
+  REJECTED
+  NO_SHOW
+}
+
+enum TripStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  DELAYED
+}
+
+enum NotificationType {
+  RESERVATION_CONFIRMATION
+  TRIP_STARTED
+  TRIP_ARRIVED
+  TRIP_DELAYED
+  TRIP_CANCELLED
+  REMINDER
+  GENERAL
+  MATCHING_SUGGESTION
+  WAITING_LIST_ASSIGNED
+  SHUTTLE_NEAR_500M
+  SHUTTLE_NEAR_200M
+  PICKUP_MODIFIED
+}
+
+enum WaitingListStatus {
+  PENDING
+  ASSIGNED
+  EXPIRED
+}
+
+model User {
+  id            String     @id @default(uuid())
+  authId        String?    @unique
+  email         String     @unique
+  firstName     String
+  lastName      String
+  phone         String?
+  avatar        String?
+  role          Role       @default(EMPLOYEE)
+  status        UserStatus @default(ACTIVE)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  events            Event[]
+  driverProfile     Driver?
+  reservations      Reservation[]
+  waitingList       WaitingList[]
+  notifications     Notification[]
+  activityLogs      ActivityLog[]
+  sentMessages      ChatMessage[]    @relation("SentMessages")
+  receivedMessages  ChatMessage[]    @relation("ReceivedMessages")
+  statusChanges     ReservationStatusHistory[]
+
+  @@map("users")
+}
+
+model Driver {
+  id            String   @id @default(uuid())
+  licenseNumber String   @unique
+  phone         String
+  address       String?
+  availability  Boolean  @default(true)
+  rating        Float    @default(0)
+  totalTrips    Int      @default(0)
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  vehicle       Vehicle?
+  trips         Trip[]
+
+  @@map("drivers")
+}
+
+model Vehicle {
+  id              String        @id @default(uuid())
+  busNumber       String        @unique
+  plateNumber     String        @unique
+  capacity        Int
+  model           String?
+  year            Int?
+  color           String?
+  status          VehicleStatus @default(AVAILABLE)
+  currentLat      Float?
+  currentLng      Float?
+  lastLocationAt  DateTime?
+  driverId        String?       @unique
+  driver          Driver?       @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  trips           Trip[]
+
+  @@map("vehicles")
+}
+
+model Event {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  date        DateTime
+  startTime   DateTime
+  endTime     DateTime
+  address     String
+  latitude    Float?
+  longitude   Float?
+  capacity    Int
+  status      EventStatus @default(DRAFT)
+  posterImage String?
+  createdById String
+  createdBy   User        @relation(fields: [createdById], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  routes        Route[]
+  reservations  Reservation[]
+  pickupPoints  PickupPoint[]
+  sharedPickups SharedPickup[]
+  waitingList   WaitingList[]
+
+  @@map("events")
+}
+
+model Route {
+  id              String   @id @default(uuid())
+  name            String
+  origin          String
+  originLat       Float?
+  originLng       Float?
+  destination     String
+  destinationLat  Float?
+  destinationLng  Float?
+  distance        Float?
+  estimatedDuration Int?
+  description     String?
+  isActive        Boolean  @default(true)
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  stops           RouteStop[]
+  trips           Trip[]
+  reservations    Reservation[]
+
+  @@map("routes")
+}
+
+model RouteStop {
+  id        String  @id @default(uuid())
+  name      String
+  latitude  Float
+  longitude Float
+  order     Int
+  routeId   String
+  route     Route   @relation(fields: [routeId], references: [id], onDelete: Cascade)
+
+  @@map("route_stops")
+}
+
+model PickupPoint {
+  id              String   @id @default(uuid())
+  name            String
+  latitude        Float
+  longitude       Float
+  address         String?
+  maxCapacity     Int      @default(50)
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  reservations    Reservation[]
+
+  @@map("pickup_points")
+}
+
+model Reservation {
+  id                String             @id @default(uuid())
+  reservationCode   String             @unique
+  date              DateTime
+  time              DateTime
+  status            ReservationStatus  @default(PENDING)
+  qrCode            String?
+  notes             String?
+  passengerCount    Int                @default(1)
+  contactPhone      String?
+  pickupLatitude    Float?
+  pickupLongitude   Float?
+  pickupAddress     String?
+  pickupTime        DateTime?
+  participantId     String
+  participant       User               @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  eventId           String
+  event             Event              @relation(fields: [eventId], references: [id])
+  pickupPointId     String?
+  pickupPoint       PickupPoint?       @relation(fields: [pickupPointId], references: [id], onDelete: SetNull)
+  optimizedPickupId String?
+  optimizedPickup   SharedPickup?      @relation("OptimizedPickup", fields: [optimizedPickupId], references: [id], onDelete: SetNull)
+  tripId            String?
+  trip              Trip?              @relation(fields: [tripId], references: [id])
+  routeId           String?
+  route             Route?             @relation(fields: [routeId], references: [id])
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  statusHistory     ReservationStatusHistory[]
+  waitingListEntry  WaitingList?
+
+  @@map("reservations")
+}
+
+model SharedPickup {
+  id              String   @id @default(uuid())
+  name            String
+  latitude        Float
+  longitude       Float
+  address         String?
+  eventId         String
+  event           Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tripId          String?
+  trip            Trip?    @relation(fields: [tripId], references: [id])
+  createdAt       DateTime @default(now())
+
+  reservations    Reservation[] @relation("OptimizedPickup")
+
+  @@map("shared_pickups")
+}
+
+model WaitingList {
+  id              String            @id @default(uuid())
+  reservationId   String            @unique
+  reservation     Reservation       @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  eventId         String
+  event           Event             @relation(fields: [eventId], references: [id])
+  tripId          String?
+  trip            Trip?             @relation(fields: [tripId], references: [id])
+  participantId   String
+  participant     User              @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  passengerCount  Int               @default(1)
+  status          WaitingListStatus @default(PENDING)
+  createdAt       DateTime          @default(now())
+  assignedAt      DateTime?
+
+  @@map("waiting_list")
+}
+
+model ReservationStatusHistory {
+  id            String           @id @default(uuid())
+  reservationId String
+  reservation   Reservation      @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  fromStatus    String
+  toStatus      String
+  changedById   String?
+  changedBy     User?            @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime         @default(now())
+
+  @@map("reservation_status_history")
+}
+
+model Trip {
+  id              String     @id @default(uuid())
+  name            String?
+  date            DateTime
+  departureTime   DateTime
+  arrivalTime     DateTime?
+  status          TripStatus @default(SCHEDULED)
+  currentLat      Float?
+  currentLng      Float?
+  currentSpeed    Float?
+  tripProgress    Float      @default(0)
+  estimatedArrival DateTime?
+  notes           String?
+  driverId        String
+  driver          Driver     @relation(fields: [driverId], references: [id])
+  vehicleId       String
+  vehicle         Vehicle    @relation(fields: [vehicleId], references: [id])
+  routeId         String
+  route           Route      @relation(fields: [routeId], references: [id])
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  reservations    Reservation[]
+  trackingLogs    TrackingLog[]
+  sharedPickups   SharedPickup[]
+  waitingList     WaitingList[]
+
+  @@map("trips")
+}
+
+model TrackingLog {
+  id        String   @id @default(uuid())
+  latitude  Float
+  longitude Float
+  speed     Float?
+  heading   Float?
+  timestamp DateTime @default(now())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@map("tracking_logs")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+
+  @@map("notifications")
+}
+
+model ChatMessage {
+  id          String   @id @default(uuid())
+  content     String
+  read        Boolean  @default(false)
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@map("chat_messages")
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("activity_logs")
+}
+
+model SystemLog {
+  id        String   @id @default(uuid())
+  level     String
+  message   String
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@map("system_logs")
+}

@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: smart-shuttle-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: smart_shuttle
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: smart-shuttle-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    container_name: smart-shuttle-api
+    restart: unless-stopped
+    ports:
+      - '5000:5000'
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/smart_shuttle?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change-this-to-a-secure-secret-in-production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-this-refresh-secret}
+      FRONTEND_URL: http://localhost:5173
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: docker/Dockerfile
+    container_name: smart-shuttle-web
+    restart: unless-stopped
+    ports:
+      - '5173:5173'
+    environment:
+      VITE_API_URL: http://localhost:5000/api
+      VITE_SOCKET_URL: http://localhost:5000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  uploads:
