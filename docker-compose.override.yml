@@ -1,0 +1,17 @@
+# Local development override
+# Auto-loaded by `docker compose up` (merges with docker-compose.yml)
+# Usage: docker compose up
+services:
+  backend:
+    ports:
+      - '5001:5000'
+    environment:
+      NODE_ENV: development
+    # For hot-reload, run locally: cd backend && npm run dev
+
+  frontend:
+    ports:
+      - '5173:80'
+    build:
+      args:
+        VITE_API_URL: /api

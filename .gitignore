@@ -3,6 +3,7 @@ dist/
 build/
 .env
 .env.local
+.env.docker
 *.log
 uploads/*
 !uploads/.gitkeep
@@ -10,3 +11,4 @@ uploads/*
 *.tsbuildinfo
 coverage/
 .turbo/
+.vercel

@@ -1,5 +1,10 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 
+const prodUrl = process.env.RENDER_EXTERNAL_URL || 'https://smart-shuttle-api.onrender.com';
+const prodServer = prodUrl.includes('localhost')
+  ? { url: 'https://smart-shuttle-api.onrender.com', description: 'Production server' }
+  : { url: prodUrl, description: 'Production server' };
+
 const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
@@ -17,6 +22,7 @@ const options: swaggerJsdoc.Options = {
         url: 'http://localhost:5000',
         description: 'Development server',
       },
+      prodServer,
     ],
     components: {
       securitySchemes: {

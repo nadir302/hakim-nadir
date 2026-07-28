@@ -1,0 +1,43 @@
+# Smart Shuttle Backend — Render Blueprint
+# https://render.com/docs/blueprint-spec
+#
+# After first deploy, set these env vars in Render Dashboard:
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DATABASE_URL, FRONTEND_URL, QR_SECRET
+#
+# Then run: npx prisma migrate deploy (via Render Shell)
+
+services:
+  - type: web
+    name: smart-shuttle-api
+    runtime: node
+    repo: https://github.com/YOUR_USER/YOUR_REPO
+    branch: main
+    plan: free
+
+    rootDir: backend
+    buildCommand: npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && node dist/server.js
+    healthCheckPath: /api/health
+
+    env: production
+    autoDeploy: true
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: '5000'
+      - key: HOST
+        value: 0.0.0.0
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: QR_SECRET
+        sync: false
+      - key: UPLOAD_DIR
+        value: uploads

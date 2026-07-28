@@ -31,4 +31,5 @@ export const config = {
   },
 
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  qrSecret: process.env.QR_SECRET || 'qr-secret-change-in-production',
 };
