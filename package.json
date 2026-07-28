@@ -1,0 +1,11 @@
+{
+  "name": "smart-shuttle",
+  "private": true,
+  "description": "Smart Shuttle Management System",
+  "scripts": {
+    "build": "cd backend && npm install --no-audit --no-fund && npx prisma generate && npm run build",
+    "start": "cd backend && npx prisma migrate deploy && node dist/server.js",
+    "dev": "cd backend && npm run dev",
+    "db:seed": "cd backend && npm run db:seed"
+  }
+}
