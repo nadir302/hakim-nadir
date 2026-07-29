@@ -31,5 +31,6 @@ export const config = {
   },
 
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  allowedOrigins: (process.env.FRONTEND_URL || 'http://localhost:5173').split(',').map(s => s.trim()),
   qrSecret: process.env.QR_SECRET || 'qr-secret-change-in-production',
 };
