@@ -2,7 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { eventService } from '../services/event.service';
 
 function combineDateTime(date: string, time: string) {
-  return new Date(`${date}T${time}:00`);
+  const timePart = time.includes('T') ? time.split('T')[1] : time;
+  return new Date(`${date}T${timePart}:00`);
 }
 
 export class EventController {
