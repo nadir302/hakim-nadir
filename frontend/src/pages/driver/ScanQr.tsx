@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { reservationsApi, tripsApi, driverApi } from '@/services/api';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle2, XCircle, CameraOff, Loader2, ScanLine, Bus } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, CameraOff, Loader2, ScanLine, Bus, User, MapPin, Phone, Mail, Calendar, Hash, Users, StickyNote } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 
 type PageState = 'idle' | 'starting-camera' | 'scanning' | 'validating' | 'success' | 'error' | 'camera-error' | 'boarding';
@@ -252,14 +252,104 @@ export default function ScanQr() {
             <div className="animate-bounce-in rounded-2xl border border-blue-400/40 bg-blue-500/20 p-5 backdrop-blur-md">
               <Bus className="mx-auto mb-2 h-14 w-14 text-blue-400" />
               <p className="text-lg font-bold text-blue-300">Scan Réussi</p>
+
               {result.participant && (
-                <div className="mt-3 text-left text-xs text-blue-300/70 space-y-1">
-                  <div className="flex items-center gap-1"><User className="h-3 w-3" /><span>{result.participant.firstName} {result.participant.lastName}</span></div>
-                  {result.event && <div className="flex items-center gap-1"><MapPin className="h-3 w-3" /><span>{result.event.name}</span></div>}
+                <div className="mt-3 rounded-xl bg-white/5 p-3 text-left text-xs text-blue-200 space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-400 mb-1">Passager</p>
+                  <div className="flex items-center gap-2">
+                    <User className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                    <span className="font-medium">{result.participant.firstName} {result.participant.lastName}</span>
+                  </div>
+                  {result.participant.email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                      <span>{result.participant.email}</span>
+                    </div>
+                  )}
+                  {(result.participant.phone || result.contactPhone) && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                      <span>{result.participant.phone || result.contactPhone}</span>
+                    </div>
+                  )}
                 </div>
               )}
-              <p className="text-xs text-blue-300/50 mt-2">Statut: {result.status}</p>
-              <Button size="sm" className="mt-3 w-full" onClick={handleBoarding}>Valider l'embarquement</Button>
+
+              <div className="mt-2 rounded-xl bg-white/5 p-3 text-left text-xs text-blue-200 space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-400 mb-1">Réservation</p>
+                <div className="flex items-center gap-2">
+                  <Hash className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                  <span className="font-medium">{result.reservationCode}</span>
+                  <span className="ml-auto rounded bg-blue-500/30 px-1.5 py-0.5 text-[10px] font-semibold">{result.status}</span>
+                </div>
+                {result.date && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                    <span>{new Date(result.date).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                  </div>
+                )}
+                {result.passengerCount > 1 && (
+                  <div className="flex items-center gap-2">
+                    <Users className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                    <span>{result.passengerCount} passagers</span>
+                  </div>
+                )}
+              </div>
+
+              {result.event && (
+                <div className="mt-2 rounded-xl bg-white/5 p-3 text-left text-xs text-blue-200 space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-400 mb-1">Événement</p>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                    <span className="font-medium">{result.event.name}</span>
+                  </div>
+                </div>
+              )}
+
+              {result.trip && (
+                <div className="mt-2 rounded-xl bg-white/5 p-3 text-left text-xs text-blue-200 space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-blue-400 mb-1">Trajet</p>
+                  <div className="flex items-center gap-2">
+                    <Bus className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                    <span>{result.trip.vehicle?.busNumber || result.trip.name || 'Navette'}</span>
+                    {result.trip.vehicle?.plateNumber && <span className="text-blue-400/70">({result.trip.vehicle.plateNumber})</span>}
+                  </div>
+                  {result.trip.route && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                      <span>{result.trip.route.origin} → {result.trip.route.destination}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {(result.pickupAddress || result.pickupPoint) && (
+                <div className="mt-2 rounded-xl bg-white/5 p-3 text-left text-xs text-blue-200">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                    <span>{result.pickupPoint?.name || result.pickupAddress}</span>
+                  </div>
+                </div>
+              )}
+
+              {result.notes && (
+                <div className="mt-2 rounded-xl bg-white/5 p-3 text-left text-xs text-blue-200">
+                  <div className="flex items-center gap-2">
+                    <StickyNote className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+                    <span>{result.notes}</span>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-xs text-blue-300/50 mt-3">Confirmer l'embarquement ?</p>
+              <div className="mt-3 flex gap-2">
+                <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={handleBoarding}>
+                  <CheckCircle2 className="mr-1 h-4 w-4" /> Valider
+                </Button>
+                <Button size="sm" variant="outline" className="flex-1 border-white/20 text-white hover:bg-white/10" onClick={() => { setPageState('idle'); setResult(null); }}>
+                  <XCircle className="mr-1 h-4 w-4" /> Annuler
+                </Button>
+              </div>
             </div>
           )}
           {pageState === 'error' && (

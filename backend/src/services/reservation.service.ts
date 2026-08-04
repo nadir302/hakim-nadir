@@ -518,7 +518,7 @@ export class ReservationService {
         include: {
           reservation: {
             include: {
-              participant: { select: { id: true, firstName: true, lastName: true, email: true } },
+        participant: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, avatar: true } },
               event: { select: { id: true, name: true } },
             },
           },
@@ -629,7 +629,8 @@ export class ReservationService {
       include: {
         participant: { select: { id: true, firstName: true, lastName: true, email: true } },
         event: { select: { id: true, name: true, date: true, startTime: true, endTime: true } },
-        trip: { select: { id: true, name: true, driverId: true, vehicle: { select: { busNumber: true } } } },
+        trip: { select: { id: true, name: true, driverId: true, vehicle: { select: { busNumber: true, plateNumber: true } }, route: { select: { name: true, origin: true, destination: true } } } },
+        pickupPoint: { select: { id: true, name: true, address: true } },
       },
     });
 
@@ -649,6 +650,12 @@ export class ReservationService {
         id: reservation.id,
         reservationCode: reservation.reservationCode,
         status: reservation.status,
+        date: reservation.date,
+        time: reservation.time,
+        notes: reservation.notes,
+        passengerCount: reservation.passengerCount,
+        contactPhone: reservation.contactPhone,
+        pickupAddress: reservation.pickupAddress,
         participant: reservation.participant,
         event: reservation.event,
         trip: reservation.trip,
