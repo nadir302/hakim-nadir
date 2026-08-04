@@ -39,6 +39,7 @@ enum ReservationStatus {
   PENDING
   CONFIRMED
   CHECKED_IN
+  BOARDED
   COMPLETED
   CANCELLED
   REJECTED
@@ -229,6 +230,7 @@ model Reservation {
   time              DateTime
   status            ReservationStatus  @default(PENDING)
   qrCode            String?
+  boardedAt         DateTime?
   notes             String?
   passengerCount    Int                @default(1)
   contactPhone      String?

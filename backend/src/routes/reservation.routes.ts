@@ -11,6 +11,8 @@ router.get('/stats', authorize('SUPER_ADMIN'), reservationController.getStats);
 router.get('/', authorize('SUPER_ADMIN', 'DRIVER'), reservationController.findAll);
 router.get('/:id', reservationController.findById);
 router.post('/validate-qr', authorize('DRIVER', 'SUPER_ADMIN'), reservationController.validateQR);
+router.post('/scan', authorize('DRIVER', 'SUPER_ADMIN'), reservationController.scanQR);
+router.post('/validate-boarding', authorize('DRIVER', 'SUPER_ADMIN'), reservationController.validateBoarding);
 router.post('/find-matches', reservationController.findMatches);
 router.post('/join-trip', authorize('EMPLOYEE'), reservationController.joinTrip);
 router.post('/', authorize('EMPLOYEE', 'SUPER_ADMIN', 'ORGANIZER'), reservationController.create);

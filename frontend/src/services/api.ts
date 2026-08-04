@@ -158,3 +158,12 @@ export const trackingApi = {
   updateLocation: (tripId: string, data: any) => api.post(`/tracking/${tripId}/location`, data),
   changeTripStatus: (tripId: string, status: string) => api.patch(`/tracking/${tripId}/status`, { status }),
 };
+
+export const ticketsApi = {
+  getTicket: (id: string) => api.get(`/tickets/${id}`),
+};
+
+export const driverApi = {
+  scanQR: (token: string) => api.post('/driver/scan', { token }),
+  validateBoarding: (reservationId: string) => api.post('/driver/validate-boarding', { reservationId }),
+};

@@ -32,6 +32,7 @@ import DriverDashboard from '@/pages/driver/Dashboard';
 import DriverTrips from '@/pages/driver/Trips';
 import DriverTracking from '@/pages/driver/Tracking';
 import DriverScanQr from '@/pages/driver/ScanQr';
+import TicketDetails from '@/pages/TicketDetails';
 
 import ParticipantDashboard from '@/pages/participant/Dashboard';
 import ParticipantBookings from '@/pages/participant/Bookings';
@@ -105,6 +106,7 @@ export default function App() {
         </Route>
 
         <Route path="/driver/scan-qr" element={<PrivateRoute roles={['DRIVER']}><DriverScanQr /></PrivateRoute>} />
+        <Route path="/ticket/:id" element={<PrivateRoute><MainLayout /><TicketDetails /></PrivateRoute>} />
 
         <Route path="/participant" element={<PrivateRoute roles={['EMPLOYEE']}><MainLayout /></PrivateRoute>}>
           <Route index element={<Navigate to="/participant/dashboard" />} />

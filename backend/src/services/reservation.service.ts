@@ -617,6 +617,86 @@ export class ReservationService {
       // non-critical, silently fail
     }
   }
+
+  async scanQR(token: string, driverId: string) {
+    const validation = verifyQrToken(token);
+    if (!validation.valid) {
+      return { success: false, message: validation.status === 'EXPIRED' ? 'QR code expired' : 'Invalid QR code' };
+    }
+
+    const reservation = await prisma.reservation.findUnique({
+      where: { id: validation.payload.sub },
+      include: {
+        participant: { select: { id: true, firstName: true, lastName: true, email: true } },
+        event: { select: { id: true, name: true, date: true, startTime: true, endTime: true } },
+        trip: { select: { id: true, name: true, driverId: true, vehicle: { select: { busNumber: true } } } },
+      },
+    });
+
+    if (!reservation) return { success: false, message: 'Reservation not found' };
+
+    if (reservation.status === 'BOARDED') {
+      return { success: false, message: 'Participant déjà embarqué.' };
+    }
+
+    if (reservation.status === 'CANCELLED' || reservation.status === 'REJECTED') {
+      return { success: false, message: `Reservation was ${reservation.status.toLowerCase()}` };
+    }
+
+    return {
+      success: true,
+      reservation: {
+        id: reservation.id,
+        reservationCode: reservation.reservationCode,
+        status: reservation.status,
+        participant: reservation.participant,
+        event: reservation.event,
+        trip: reservation.trip,
+      },
+    };
+  }
+
+  async validateBoarding(reservationId: string, driverId: string) {
+    const reservation = await prisma.reservation.findUnique({
+      where: { id: reservationId },
+      include: { event: { select: { id: true, name: true } } },
+    });
+
+    if (!reservation) throw new AppError('Reservation not found', 404);
+    if (reservation.status === 'BOARDED') throw new AppError('Participant déjà embarqué.', 400);
+    if (reservation.status !== 'CONFIRMED' && reservation.status !== 'CHECKED_IN') {
+      throw new AppError('Reservation is not eligible for boarding', 400);
+    }
+
+    const updated = await prisma.reservation.update({
+      where: { id: reservationId },
+      data: { status: 'BOARDED', boardedAt: new Date() },
+      include: { participant: { select: { id: true, firstName: true, lastName: true } }, event: { select: { id: true, name: true } } },
+    });
+
+    await this.logStatusChange(reservationId, reservation.status, 'BOARDED', driverId);
+
+    await prisma.notification.create({
+      data: {
+        type: 'TRIP_STARTED',
+        title: 'Embarquement validé',
+        message: `Le participant ${updated.participant?.firstName} ${updated.participant?.lastName} a été validé pour ${updated.event?.name}`,
+        userId: reservation.participantId,
+      },
+    });
+
+    await prisma.activityLog.create({
+      data: {
+        action: 'BOARDING_VALIDATED',
+        entity: 'Reservation',
+        entityId: reservationId,
+        details: JSON.stringify({ driverId, reservationId: reservation.id }),
+        userId: driverId,
+      },
+    });
+
+    return { success: true, message: 'Embarquement validé.', reservation: updated };
+  }
 }
 
 export const reservationService = new ReservationService();

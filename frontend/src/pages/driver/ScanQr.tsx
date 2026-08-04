@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { reservationsApi, tripsApi } from '@/services/api';
+import { reservationsApi, tripsApi, driverApi } from '@/services/api';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, CheckCircle2, XCircle, CameraOff, Loader2, ScanLine } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, CameraOff, Loader2, ScanLine, Bus } from 'lucide-react';
 import { Html5Qrcode } from 'html5-qrcode';
 
-type PageState = 'idle' | 'starting-camera' | 'scanning' | 'validating' | 'success' | 'error' | 'camera-error';
+type PageState = 'idle' | 'starting-camera' | 'scanning' | 'validating' | 'success' | 'error' | 'camera-error' | 'boarding';
 
 export default function ScanQr() {
   const navigate = useNavigate();
@@ -15,6 +15,7 @@ export default function ScanQr() {
   const [pageState, setPageState] = useState<PageState>('idle');
   const [result, setResult] = useState<any>(null);
   const [cameraError, setCameraError] = useState('');
+  const [boardingMsg, setBoardingMsg] = useState('');
 
   const { data: trip } = useQuery({
     queryKey: ['driver-current-trip'],
@@ -32,6 +33,33 @@ export default function ScanQr() {
       else showError(res.data.message || 'Invalid QR code');
     } catch (err: any) {
       showError(err.response?.data?.message || 'Validation failed');
+    }
+  };
+
+  const handleScan = async (token: string) => {
+    setPageState('validating');
+    try {
+      const res = await driverApi.scanQR(token);
+      if (res.data.success) {
+        setResult(res.data.reservation);
+        setPageState('boarding');
+      } else {
+        showError(res.data.message || 'QR scan failed');
+      }
+    } catch (err: any) {
+      showError(err.response?.data?.message || 'Scan failed');
+    }
+  };
+
+  const handleBoarding = async () => {
+    if (!result?.id) return;
+    try {
+      const res = await driverApi.validateBoarding(result.id);
+      setBoardingMsg(res.data.message || 'Embarquement validé.');
+      setPageState('success');
+      setTimeout(() => { if (mountedRef.current) navigate('/driver/tracking'); }, 2000);
+    } catch (err: any) {
+      setBoardingMsg(err.response?.data?.message || 'Validation failed');
     }
   };
 
@@ -101,11 +129,11 @@ export default function ScanQr() {
       const scanner = new Html5Qrcode('qr-reader-container');
       scannerRef.current = scanner;
       const config = { fps: 10, qrbox: { width: 260, height: 260 } };
-      const onScan = (decodedText: string) => {
-        if (!mountedRef.current) return;
-        scanner.stop().catch(() => {});
-        validateToken(decodedText);
-      };
+       const onScan = (decodedText: string) => {
+         if (!mountedRef.current) return;
+         scanner.stop().catch(() => {});
+         handleScan(decodedText);
+       };
       let lastErr = '';
       for (const facing of ['environment', 'user'] as const) {
         try {
@@ -206,11 +234,32 @@ export default function ScanQr() {
               <span className="text-sm font-medium">Validating...</span>
             </div>
           )}
-          {pageState === 'success' && (
+          {pageState === 'success' && result && (
             <div className="animate-bounce-in rounded-2xl border border-green-400/40 bg-green-500/20 p-5 backdrop-blur-md">
               <CheckCircle2 className="mx-auto mb-2 h-14 w-14 text-green-400" />
               <p className="text-lg font-bold text-green-300">Check-in Successful!</p>
+              {result.participant && (
+                <div className="mt-3 text-left text-xs text-green-300/70 space-y-1">
+                  <div className="flex items-center gap-1"><User className="h-3 w-3" /><span>{result.participant.firstName} {result.participant.lastName}</span></div>
+                  {result.event && <div className="flex items-center gap-1"><MapPin className="h-3 w-3" /><span>{result.event.name}</span></div>}
+                  {result.trip && <div className="flex items-center gap-1"><Bus className="h-3 w-3" /><span>{result.trip.vehicle?.busNumber || result.trip.name || 'Navette'}</span></div>}
+                </div>
+              )}
               <p className="mt-3 text-xs text-green-300/50">Returning to tracking...</p>
+            </div>
+          )}
+          {pageState === 'boarding' && result && (
+            <div className="animate-bounce-in rounded-2xl border border-blue-400/40 bg-blue-500/20 p-5 backdrop-blur-md">
+              <Bus className="mx-auto mb-2 h-14 w-14 text-blue-400" />
+              <p className="text-lg font-bold text-blue-300">Scan Réussi</p>
+              {result.participant && (
+                <div className="mt-3 text-left text-xs text-blue-300/70 space-y-1">
+                  <div className="flex items-center gap-1"><User className="h-3 w-3" /><span>{result.participant.firstName} {result.participant.lastName}</span></div>
+                  {result.event && <div className="flex items-center gap-1"><MapPin className="h-3 w-3" /><span>{result.event.name}</span></div>}
+                </div>
+              )}
+              <p className="text-xs text-blue-300/50 mt-2">Statut: {result.status}</p>
+              <Button size="sm" className="mt-3 w-full" onClick={handleBoarding}>Valider l'embarquement</Button>
             </div>
           )}
           {pageState === 'error' && (

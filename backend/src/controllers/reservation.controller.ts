@@ -115,6 +115,24 @@ export class ReservationController {
       res.json(pickups);
     } catch (error) { next(error); }
   }
+
+  async scanQR(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { token } = req.body;
+      if (!token) throw new AppError('QR token is required', 400);
+      const result = await reservationService.scanQR(token, req.user!.userId);
+      res.json(result);
+    } catch (error) { next(error); }
+  }
+
+  async validateBoarding(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { reservationId } = req.body;
+      if (!reservationId) throw new AppError('reservationId is required', 400);
+      const result = await reservationService.validateBoarding(reservationId, req.user!.userId);
+      res.json(result);
+    } catch (error) { next(error); }
+  }
 }
 
 export const reservationController = new ReservationController();
