@@ -627,10 +627,10 @@ export class ReservationService {
     const reservation = await prisma.reservation.findUnique({
       where: { id: validation.payload.sub },
       include: {
-        participant: { select: { id: true, firstName: true, lastName: true, email: true } },
+        participant: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, avatar: true } },
         event: { select: { id: true, name: true, date: true, startTime: true, endTime: true } },
         trip: { select: { id: true, name: true, driverId: true, vehicle: { select: { busNumber: true, plateNumber: true } }, route: { select: { name: true, origin: true, destination: true } } } },
-        pickupPoint: { select: { id: true, name: true, address: true } },
+        pickupPoint: { select: { id: true, name: true, address: true, latitude: true, longitude: true, maxCapacity: true } },
       },
     });
 
@@ -659,6 +659,7 @@ export class ReservationService {
         participant: reservation.participant,
         event: reservation.event,
         trip: reservation.trip,
+        pickupPoint: reservation.pickupPoint,
       },
     };
   }
