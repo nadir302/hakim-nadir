@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { tripsApi } from '@/services/api';
+import { trackingApi } from '@/services/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getStatusColor, formatTime } from '@/lib/utils';
@@ -9,7 +9,7 @@ import ShuttleMap from '@/components/maps/ShuttleMap';
 export default function AdminActiveShuttles() {
   const { data: trips, isLoading } = useQuery({
     queryKey: ['active-shuttles'],
-    queryFn: () => tripsApi.getActive().then(r => r.data),
+    queryFn: () => trackingApi.getActiveShuttles().then(r => r.data),
     refetchInterval: 10000,
   });
 

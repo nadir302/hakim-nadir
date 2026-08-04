@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getStatusColor, formatDate, formatTime } from '@/lib/utils';
 import TrackingMap from '@/components/maps/TrackingMap';
-import { Play, Pause, Square, RotateCcw, ChevronLeft, Clock, Gauge, MapPin, Navigation, TrendingUp } from 'lucide-react';
+import { Play, Pause, Square, RotateCcw, ChevronLeft, Clock, Gauge, MapPin, Navigation, TrendingUp, Calendar } from 'lucide-react';
 
 type ReplayPoint = {
   id: string; latitude: number; longitude: number;

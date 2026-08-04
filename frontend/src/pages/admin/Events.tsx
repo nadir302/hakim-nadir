@@ -33,13 +33,13 @@ export default function AdminEvents() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (d: EventFormData) => eventsApi.create(d),
+    mutationFn: (d: any) => eventsApi.create(d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['events'] }); toast.success('Event created'); setModalOpen(false); form.reset(); },
     onError: (err: any) => toast.error(err.response?.data?.message || 'Failed'),
   });
 
   const updateMutation = useMutation({
-    mutationFn: (d: EventFormData) => eventsApi.update(editing.id, d),
+    mutationFn: (d: any) => eventsApi.update(editing.id, d),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['events'] }); toast.success('Event updated'); setModalOpen(false); setEditing(null); form.reset(); },
     onError: (err: any) => toast.error(err.response?.data?.message || 'Failed'),
   });
@@ -63,8 +63,13 @@ export default function AdminEvents() {
   };
 
   const onSubmit = async (data: EventFormData) => {
-    if (editing) updateMutation.mutate(data);
-    else createMutation.mutate(data);
+    const payload = {
+      ...data,
+      startTime: (data.startTime || '').includes('T') ? (data.startTime as string).split('T')[1] : data.startTime,
+      endTime: (data.endTime || '').includes('T') ? (data.endTime as string).split('T')[1] : data.endTime,
+    };
+    if (editing) updateMutation.mutate(payload);
+    else createMutation.mutate(payload);
   };
 
   const columns = [

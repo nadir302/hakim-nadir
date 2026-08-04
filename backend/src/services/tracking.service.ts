@@ -120,7 +120,7 @@ export class TrackingService {
       include: {
         vehicle: { select: { id: true, busNumber: true, plateNumber: true, capacity: true, currentLat: true, currentLng: true } },
         driver: { include: { user: { select: { id: true, firstName: true, lastName: true, phone: true } } } },
-        route: { select: { id: true, name: true, origin: true, destination: true } },
+        route: { select: { id: true, name: true, origin: true, destination: true, originLat: true, originLng: true, destinationLat: true, destinationLng: true } },
         _count: { select: { reservations: true } },
       },
       orderBy: { departureTime: 'asc' },
@@ -140,7 +140,7 @@ export class TrackingService {
   async replayTrip(tripId: string) {
     const trip = await prisma.trip.findUnique({
       where: { id: tripId },
-      include: { trackingLogs: { orderBy: { timestamp: 'asc' } }, route: { include: { stops: true } } },
+      include: { trackingLogs: { orderBy: { timestamp: 'asc' } }, route: { include: { stops: true } }, driver: { include: { user: true } }, vehicle: true },
     });
     if (!trip) throw new AppError('Trip not found', 404);
     return trip;

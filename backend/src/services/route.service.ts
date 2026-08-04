@@ -2,13 +2,20 @@ import prisma from '../config/database';
 import { AppError } from '../middleware/error.middleware';
 
 export class RouteService {
-  async findAll(params: { page?: number; limit?: number; eventId?: string }) {
+  async findAll(params: { page?: number; limit?: number; eventId?: string; search?: string }) {
     const page = Number(params.page) || 1;
     const limit = Number(params.limit) || 10;
     const skip = (page - 1) * limit;
 
     const where: any = {};
     if (params.eventId) where.eventId = params.eventId;
+    if (params.search) {
+      where.OR = [
+        { name: { contains: params.search, mode: 'insensitive' } },
+        { origin: { contains: params.search, mode: 'insensitive' } },
+        { destination: { contains: params.search, mode: 'insensitive' } },
+      ];
+    }
 
     const [routes, total] = await Promise.all([
       prisma.route.findMany({
