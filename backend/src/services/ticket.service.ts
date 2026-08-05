@@ -1,6 +1,6 @@
 import prisma from '../config/database';
 import { AppError } from '../middleware/error.middleware';
-import { generateQrToken } from '../utils/jwt';
+import { generateQrToken, verifyQrToken } from '../utils/jwt';
 
 export class TicketService {
   async getTicket(reservationId: string, userId: string, role: string) {
@@ -27,7 +27,8 @@ export class TicketService {
     }
 
     let qrCode = reservation.qrCode;
-    if (!qrCode && reservation.status !== 'CANCELLED' && reservation.status !== 'REJECTED') {
+    const qrValid = qrCode ? verifyQrToken(qrCode).valid : false;
+    if (!qrValid && reservation.status !== 'CANCELLED' && reservation.status !== 'REJECTED') {
       qrCode = generateQrToken({
         sub: reservation.id,
         code: reservation.reservationCode,

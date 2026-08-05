@@ -128,16 +128,25 @@ export default function ScanQr() {
       }
       const scanner = new Html5Qrcode('qr-reader-container');
       scannerRef.current = scanner;
-      const config = { fps: 10, qrbox: { width: 260, height: 260 } };
+      const config = {
+        fps: 10,
+        qrbox: { width: 360, height: 360 },
+        aspectRatio: 1.0,
+        experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+      };
        const onScan = (decodedText: string) => {
          if (!mountedRef.current) return;
          scanner.stop().catch(() => {});
          handleScan(decodedText);
        };
       let lastErr = '';
-      for (const facing of ['environment', 'user'] as const) {
+      const facingModes: MediaTrackConstraints[] = [
+        { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        { facingMode: { ideal: 'user' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      ];
+      for (const constraints of facingModes) {
         try {
-          await scanner.start({ facingMode: facing }, config, onScan, () => {});
+          await scanner.start(constraints, config, onScan, () => {});
           if (mountedRef.current) setPageState('scanning');
           return;
         } catch (e: any) { lastErr = e?.message || e?.toString() || 'Unknown error'; }

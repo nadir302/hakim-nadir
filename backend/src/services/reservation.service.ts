@@ -572,7 +572,7 @@ export class ReservationService {
   }
 
   async getParticipantReservations(participantId: string) {
-    return prisma.reservation.findMany({
+    const reservations = await prisma.reservation.findMany({
       where: { participantId },
       orderBy: { date: 'desc' },
       include: {
@@ -590,6 +590,21 @@ export class ReservationService {
         statusHistory: { orderBy: { createdAt: 'asc' } },
       },
     });
+
+    for (const reservation of reservations) {
+      if (reservation.status === 'CANCELLED' || reservation.status === 'REJECTED') continue;
+      const validation = reservation.qrCode ? verifyQrToken(reservation.qrCode) : { valid: false };
+      if (!validation.valid) {
+        const freshToken = this.generateQrToken(reservation);
+        await prisma.reservation.update({
+          where: { id: reservation.id },
+          data: { qrCode: freshToken },
+        });
+        reservation.qrCode = freshToken;
+      }
+    }
+
+    return reservations;
   }
 
   async getStats() {

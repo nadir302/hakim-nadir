@@ -15,7 +15,7 @@ function SafeQRCode({ value, size }: { value: string; size: number }) {
   const [qrError, setQrError] = useState(false);
   useEffect(() => {
     let mounted = true;
-    QRCode.toDataURL(value, { width: size, errorCorrectionLevel: 'L', margin: 1 })
+    QRCode.toDataURL(value, { width: size, errorCorrectionLevel: 'M', margin: 4 })
       .then((url: string) => { if (mounted) setQrDataUrl(url); })
       .catch(() => { if (mounted) setQrError(true); });
     return () => { mounted = false; };
@@ -139,7 +139,7 @@ export default function MyTickets() {
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
                     {r.qrCode && r.status !== 'CANCELLED' && (
                       <div className="rounded bg-white p-1" title="Scan for check-in">
-                        <SafeQRCode value={r.qrCode} size={88} />
+                        <SafeQRCode value={r.qrCode} size={140} />
                       </div>
                     )}
                     <span className="font-mono text-[10px] text-muted-foreground">{r.reservationCode}</span>
