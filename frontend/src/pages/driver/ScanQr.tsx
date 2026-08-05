@@ -341,6 +341,9 @@ export default function ScanQr() {
                 </div>
               )}
 
+              {boardingMsg && (
+                <p className="mt-2 rounded-lg bg-red-500/20 px-3 py-2 text-xs text-red-200">{boardingMsg}</p>
+              )}
               <p className="text-xs text-blue-300/50 mt-3">Confirmer l'embarquement ?</p>
               <div className="mt-3 flex gap-2">
                 <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={handleBoarding}>

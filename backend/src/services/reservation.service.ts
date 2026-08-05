@@ -644,6 +644,10 @@ export class ReservationService {
       return { success: false, message: `Reservation was ${reservation.status.toLowerCase()}` };
     }
 
+    if (reservation.status !== 'CONFIRMED' && reservation.status !== 'CHECKED_IN') {
+      return { success: false, message: 'Réservation en attente de confirmation. Veuillez attendre l\'approbation de l\'organisateur.' };
+    }
+
     return {
       success: true,
       reservation: {
