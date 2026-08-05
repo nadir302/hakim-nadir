@@ -59,7 +59,7 @@ export default function AdminUsers() {
       </div>
     )},
     { key: 'role', header: 'Role', render: (u: any) => (
-      <Badge variant={u.role === 'SUPER_ADMIN' ? 'default' : 'secondary'}>{u.role.replace('_', ' ')}</Badge>
+      <Badge variant={u.role === 'SUPER_ADMIN' ? 'default' : 'secondary'}>{u.role ? u.role.replace('_', ' ') : ''}</Badge>
     )},
     { key: 'status', header: 'Status', render: (u: any) => <Badge className={getStatusColor(u.status)}>{u.status}</Badge> },
     { key: 'verified', header: 'Verified', render: (u: any) => u.emailVerified ? <Badge variant="success">Yes</Badge> : <Badge variant="warning">No</Badge> },

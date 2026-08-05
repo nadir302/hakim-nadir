@@ -48,7 +48,7 @@ export default function AdminActiveShuttles() {
                   <Bus className="h-5 w-5 text-primary" />
                   <span className="font-semibold">{trip.vehicle?.busNumber || 'N/A'}</span>
                 </div>
-                <Badge className={getStatusColor(trip.status)}>{trip.status.replace('_', ' ')}</Badge>
+                <Badge className={getStatusColor(trip.status)}>{trip.status ? trip.status.replace('_', ' ') : ''}</Badge>
               </div>
 
               <div className="space-y-2 text-sm">

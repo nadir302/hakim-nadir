@@ -67,7 +67,7 @@ export default function AdminTrips() {
     { key: 'vehicle', header: 'Vehicle', render: (t: any) => t.vehicle?.busNumber || '-' },
     { key: 'departure', header: 'Departure', render: (t: any) => `${formatDate(t.date)} ${formatTime(t.departureTime)}` },
     { key: 'passengers', header: 'Passengers', render: (t: any) => t._count?.reservations || 0 },
-    { key: 'status', header: 'Status', render: (t: any) => <Badge className={getStatusColor(t.status)}>{t.status.replace('_', ' ')}</Badge> },
+    { key: 'status', header: 'Status', render: (t: any) => <Badge className={getStatusColor(t.status)}>{t.status ? t.status.replace('_', ' ') : ''}</Badge> },
     { key: 'actions', header: '', render: (t: any) => t.status === 'COMPLETED' ? (
       <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/trips/replay/${t.id}`)}>
         <History className="h-4 w-4 mr-1" /> Replay

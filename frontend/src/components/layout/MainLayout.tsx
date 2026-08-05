@@ -87,7 +87,7 @@ export default function MainLayout() {
           </div>
           <div className="min-w-0">
             <h2 className="truncate text-sm font-bold">Smart Shuttle</h2>
-            <p className="truncate text-xs text-sidebar-foreground/60">{user?.role.replace('_', ' ')}</p>
+            <p className="truncate text-xs text-sidebar-foreground/60">{user?.role?.replace('_', ' ') || ''}</p>
           </div>
         </div>
 

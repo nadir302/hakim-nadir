@@ -151,7 +151,7 @@ export default function DriverDashboard() {
                   </div>
                 </div>
                 <Badge className={getStatusColor(activeTrip.status)} aria-label={`Trip status: ${activeTrip.status}`}>
-                  {activeTrip.status.replace('_', ' ')}
+                  {activeTrip.status ? activeTrip.status.replace('_', ' ') : ''}
                 </Badge>
               </div>
             </CardHeader>
@@ -283,7 +283,7 @@ export default function DriverDashboard() {
                           <p className="truncate text-xs text-muted-foreground">{r.reservationCode}</p>
                         </div>
                         <Badge className={getStatusColor(r.status)} aria-label={`Status: ${r.status}`}>
-                          {r.status.replace('_', ' ')}
+                          {r.status ? r.status.replace('_', ' ') : ''}
                         </Badge>
                         {r.status === 'CHECKED_IN' && (
                           <UserCheck className="h-4 w-4 shrink-0 text-emerald-500" aria-label="Checked in" />

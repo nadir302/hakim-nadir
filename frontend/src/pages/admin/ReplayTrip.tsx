@@ -124,7 +124,7 @@ export default function AdminReplayTrip() {
             <p className="text-muted-foreground">{trip?.name || tripId?.slice(0, 8)}</p>
           </div>
         </div>
-        <Badge className={getStatusColor(trip?.status || '')}>{trip?.status?.replace('_', ' ')}</Badge>
+        <Badge className={getStatusColor(trip?.status || '')}>{trip?.status ? trip.status.replace('_', ' ') : ''}</Badge>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

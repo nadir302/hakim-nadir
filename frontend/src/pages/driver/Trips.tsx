@@ -62,7 +62,7 @@ export default function DriverTrips() {
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-3">
                       <h3 className="text-lg font-semibold">{trip.name || `Trip #${trip.id.slice(0, 8)}`}</h3>
-                      <Badge className={getStatusColor(trip.status)}>{trip.status.replace('_', ' ')}</Badge>
+                      <Badge className={getStatusColor(trip.status)}>{trip.status ? trip.status.replace('_', ' ') : ''}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground">{trip.route?.name} — {trip.route?.origin} → {trip.route?.destination}</p>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">

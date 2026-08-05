@@ -115,7 +115,7 @@ export default function AdminDashboard() {
                     <div key={entry.name} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                        <span className="capitalize">{entry.name.toLowerCase().replace('_', ' ')}</span>
+                        <span className="capitalize">{entry.name ? String(entry.name).toLowerCase().replace('_', ' ') : ''}</span>
                       </div>
                       <span className="font-medium">{entry.value}</span>
                     </div>

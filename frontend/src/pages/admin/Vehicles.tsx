@@ -58,7 +58,7 @@ export default function AdminVehicles() {
     { key: 'model', header: 'Model', render: (v: any) => v.model || '-' },
     { key: 'capacity', header: 'Capacity', render: (v: any) => `${v.capacity} seats` },
     { key: 'driver', header: 'Driver', render: (v: any) => v.driver ? `${v.driver.user?.firstName} ${v.driver.user?.lastName}` : 'Unassigned' },
-    { key: 'status', header: 'Status', render: (v: any) => <Badge className={getStatusColor(v.status)}>{v.status.replace('_', ' ')}</Badge> },
+    { key: 'status', header: 'Status', render: (v: any) => <Badge className={getStatusColor(v.status)}>{v.status ? v.status.replace('_', ' ') : ''}</Badge> },
     { key: 'actions', header: '', render: (v: any) => <Button variant="ghost" size="sm" onClick={() => openEdit(v)}><Edit2 className="h-4 w-4" /></Button> },
   ];
 
