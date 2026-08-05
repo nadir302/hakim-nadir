@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import { cn } from '@/lib/utils';
 import NotificationCenter from '@/components/shared/NotificationCenter';
+import BackButton from '@/components/shared/BackButton';
 import {
   LayoutDashboard, Users, Calendar, Truck, UserCircle, Route,
   MapPin, Ticket, BarChart3, Menu, X, LogOut, Sun, Moon,
@@ -42,8 +43,17 @@ export default function MainLayout() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const roleHomePaths: Record<string, string> = {
+    SUPER_ADMIN: '/admin/dashboard',
+    ORGANIZER: '/admin/dashboard',
+    DRIVER: '/driver/dashboard',
+    EMPLOYEE: '/participant/dashboard',
+  };
+  const isHomePage = location.pathname === roleHomePaths[user?.role || '']; // no back button on each role's dashboard
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -132,13 +142,16 @@ export default function MainLayout() {
         {/* Header */}
         <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <div className="flex flex-1 items-center justify-between px-4 md:px-6">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-accent lg:hidden"
-              aria-label="Open sidebar"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-accent lg:hidden"
+                aria-label="Open sidebar"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              {!isHomePage && <BackButton />}
+            </div>
 
             <div className="flex-1" />
 

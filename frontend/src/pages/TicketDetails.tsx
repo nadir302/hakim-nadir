@@ -5,7 +5,7 @@ import { ticketsApi } from '@/services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, QrCode, Bus, MapPin, Clock, Calendar, User, Phone, FileText } from 'lucide-react';
+import { QrCode, Bus, MapPin, Clock, Calendar, User, Phone, FileText } from 'lucide-react';
 import { getStatusColor } from '@/lib/utils';
 import SafeQRCode from '@/components/shared/SafeQRCode';
 
@@ -40,7 +40,7 @@ export default function TicketDetails() {
     <div className="flex flex-col items-center justify-center min-h-[400px] text-muted-foreground">
       <FileText className="h-12 w-12 mb-4 opacity-50" />
       <p>Billet introuvable.</p>
-      <Button variant="link" asChild><Link to="/my-tickets">Retour</Link></Button>
+      <Button variant="link" asChild><Link to="/participant/tickets">Retour</Link></Button>
     </div>
   );
 
@@ -48,12 +48,7 @@ export default function TicketDetails() {
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild>
-          <Link to="/my-tickets"><ArrowLeft className="h-5 w-5" /></Link>
-        </Button>
-        <h1 className="text-2xl font-bold">Mon billet</h1>
-      </div>
+      <h1 className="text-2xl font-bold">Mon billet</h1>
 
       <Card>
         <CardHeader><CardTitle>Informations du billet</CardTitle></CardHeader>

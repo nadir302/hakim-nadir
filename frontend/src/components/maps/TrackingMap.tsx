@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Layers, Map as MapIcon, Sun, Moon, Maximize2, Minimize2 } from 'lucide-react';
 
 interface TrackingMapProps {
+  center?: [number, number];
   shuttlePosition?: [number, number];
   shuttleHeading?: number;
+  userPosition?: [number, number];
   shuttles?: { id: string; label: string; position: [number, number]; heading?: number }[];
   stops?: MapPoint[];
   origin?: MapPoint;
@@ -75,14 +77,15 @@ const TILE_KEYS = ['street', 'dark', 'satellite'] as const;
 type TileMode = (typeof TILE_KEYS)[number];
 
 export default function TrackingMap({
-  shuttlePosition, shuttleHeading, shuttles = [], stops = [], origin, destination,
+  shuttlePosition, shuttleHeading, userPosition, shuttles = [], stops = [], origin, destination,
   routePath, onMapReady, height = '400px', zoom = 13,
   showControls = true, showTraffic: _showTraffic = false,
-  showSatellite: initialSatellite = false,
+  showSatellite: initialSatellite = false, center: centerProp,
 }: TrackingMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const shuttleMarkerRef = useRef<L.Marker | null>(null);
+  const userMarkerRef = useRef<L.Marker | null>(null);
   const multiShuttleRef = useRef<L.Marker[]>([]);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const routeLayerRef = useRef<L.Polyline | null>(null);
@@ -92,7 +95,7 @@ export default function TrackingMap({
   const [tileMode, setTileMode] = useState<TileMode>('street');
   const [fullscreen, setFullscreen] = useState(false);
 
-  const center: [number, number] = shuttlePosition || [40.7128, -74.006];
+  const center: [number, number] = shuttlePosition || centerProp || [40.7128, -74.006];
 
   const isDark = useCallback(() => document.documentElement.classList.contains('dark'), []);
 
@@ -180,6 +183,35 @@ export default function TrackingMap({
     }
     map.panTo(pos);
   }, [shuttlePosition, shuttleHeading, mapReady]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+    if (userMarkerRef.current) { userMarkerRef.current.remove(); userMarkerRef.current = null; }
+    if (userPosition) {
+      const pos = L.latLng(userPosition[0], userPosition[1]);
+      const icon = L.divIcon({
+        className: 'user-position-marker',
+        html: `<div style="width:16px;height:16px;border-radius:50%;background:#3b82f6;border:3px solid white;box-shadow:0 0 0 6px rgba(59,130,246,0.25),0 2px 6px rgba(0,0,0,0.3)"></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+      });
+      const marker = L.marker(pos, { icon, zIndexOffset: 900 }).addTo(map);
+      marker.bindTooltip('You', { permanent: false, direction: 'top' });
+      userMarkerRef.current = marker;
+    }
+  }, [userPosition, mapReady]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    const handler = (e: Event) => {
+      const pos = (e as CustomEvent).detail as [number, number];
+      if (pos) map.flyTo(L.latLng(pos[0], pos[1]), Math.max(map.getZoom(), 15));
+    };
+    window.addEventListener('locate-user', handler);
+    return () => window.removeEventListener('locate-user', handler);
+  }, [mapReady]);
 
   useEffect(() => {
     const map = mapRef.current;

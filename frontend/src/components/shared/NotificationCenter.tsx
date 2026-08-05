@@ -30,7 +30,7 @@ export default function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-  const socketRef = useSocket();
+  const { subscribe } = useSocket();
 
   const { data, isLoading } = useQuery({
     queryKey: ['notifications'],
@@ -57,12 +57,11 @@ export default function NotificationCenter() {
   });
 
   useEffect(() => {
-    const socket = socketRef.current;
-    if (!socket) return;
-    const handler = () => queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    socket.on('notification', handler);
-    return () => { socket.off('notification', handler); };
-  }, [socketRef, queryClient]);
+    const unsub = subscribe('notifications', 'notification', () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    });
+    return () => { unsub(); };
+  }, [subscribe, queryClient]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

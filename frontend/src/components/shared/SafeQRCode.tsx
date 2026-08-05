@@ -11,7 +11,7 @@ export default function SafeQRCode({ value, size = 200 }: SafeQRCodeProps) {
 
   useEffect(() => {
     if (canvasRef.current && value) {
-      QRCode.toCanvas(canvasRef.current, value, { width: size, errorCorrectionLevel: 'M', margin: 2 }, () => {});
+      QRCode.toCanvas(canvasRef.current, value, { width: size, errorCorrectionLevel: 'M', margin: 2 })
     }
   }, [value, size]);
 

@@ -9,7 +9,7 @@ export default function VerifyEmail() {
 
   useEffect(() => {
     if (token) {
-      supabase.auth.verifyOtp({ tokenHash: token, type: 'signup' })
+      supabase.auth.verifyOtp({ token, type: 'signup' } as any)
         .then(({ error }) => {
           setStatus(error ? 'error' : 'success');
         })

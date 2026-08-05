@@ -4,11 +4,12 @@ import { tripsApi } from '@/services/api';
 import { useSocket } from '@/hooks/useSocket';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { getStatusColor, formatDate, formatTime } from '@/lib/utils';
 import TrackingMap from '@/components/maps/TrackingMap';
 import { MapPoint } from '@/services/googleMaps';
 import { useEffect, useState } from 'react';
-import { Navigation, Gauge, Timer, Bus, MapPin, Clock, CheckCircle2, Radio, Users, ChevronRight } from 'lucide-react';
+import { Navigation, Gauge, Timer, Bus, MapPin, Clock, CheckCircle2, Radio, Users, ChevronRight, Locate } from 'lucide-react';
 
 const STATUS_SEQUENCE = [
   { status: 'SCHEDULED', label: 'Scheduled', icon: Clock },
@@ -23,8 +24,10 @@ const STATUS_SEQUENCE = [
 
 export default function ParticipantTrack() {
   const { tripId } = useParams();
-  const socketRef = useSocket();
+  const { subscribe, joinTrip, leaveTrip } = useSocket();
   const [livePos, setLivePos] = useState<[number, number] | undefined>();
+  const [userPos, setUserPos] = useState<[number, number] | undefined>();
+  const [gpsDenied, setGpsDenied] = useState(false);
   const [liveSpeed, setLiveSpeed] = useState(0);
   const [liveEta, setLiveEta] = useState<string | null>(null);
   const [liveDistance, setLiveDistance] = useState<number | null>(null);
@@ -46,53 +49,62 @@ export default function ParticipantTrack() {
   }, [trip]);
 
   useEffect(() => {
-    if (!socketRef.current || !tripId) return;
+    if (!tripId) return;
+    joinTrip(tripId);
 
-    socketRef.current.emit('subscribe-shuttle', tripId);
-
-    const handleLocation = (data: any) => {
-      if (data.tripId === tripId && data.lat && data.lng) {
+    const unsubLocation = subscribe(`trip:${tripId}`, 'location-update', (data: any) => {
+      if (data.lat && data.lng) {
         setLivePos([data.lat, data.lng]);
         if (data.speed) setLiveSpeed(data.speed);
         if (data.estimatedArrival) setLiveEta(formatTime(data.estimatedArrival));
         if (data.remainingDistance !== undefined) setLiveDistance(data.remainingDistance);
         if (data.progress !== undefined) setLiveProgress(data.progress);
       }
-    };
+    });
 
-    const handleStatus = (data: any) => {
-      if (data.tripId === tripId) {
-        setTripStatus(data.status);
-        setStatusLabel(data.label || data.status.replace('_', ' '));
+    const unsubStatus = subscribe(`trip:${tripId}`, 'trip-status-changed', (data: any) => {
+      setTripStatus(data.status);
+      setStatusLabel(data.label || String(data.status).replace('_', ' '));
+    });
+
+    const unsubProximity = subscribe(`trip:${tripId}`, 'shuttle-near', (data: any) => {
+      setProximityStage(data.stage);
+      if (data.stage === 'approaching') {
+        setLastNotif('Shuttle is 500m away');
+        setTimeout(() => setLastNotif(null), 5000);
+      } else if (data.stage === 'very-close') {
+        setLastNotif('Shuttle is almost here!');
+        setTimeout(() => setLastNotif(null), 5000);
+      } else if (data.stage === 'arrived') {
+        setLastNotif('Shuttle has arrived!');
       }
-    };
-
-    const handleProximity = (data: any) => {
-      if (data.tripId === tripId) {
-        setProximityStage(data.stage);
-        if (data.stage === 'approaching') {
-          setLastNotif('Shuttle is 500m away');
-          setTimeout(() => setLastNotif(null), 5000);
-        } else if (data.stage === 'very-close') {
-          setLastNotif('Shuttle is almost here!');
-          setTimeout(() => setLastNotif(null), 5000);
-        } else if (data.stage === 'arrived') {
-          setLastNotif('Shuttle has arrived!');
-        }
-      }
-    };
-
-    socketRef.current.on('location-update', handleLocation);
-    socketRef.current.on('trip-status-changed', handleStatus);
-    socketRef.current.on('shuttle-near', handleProximity);
+    });
 
     return () => {
-      socketRef.current?.emit('unsubscribe-shuttle', tripId);
-      socketRef.current?.off('location-update', handleLocation);
-      socketRef.current?.off('trip-status-changed', handleStatus);
-      socketRef.current?.off('shuttle-near', handleProximity);
+      leaveTrip(tripId);
+      unsubLocation();
+      unsubStatus();
+      unsubProximity();
     };
-  }, [socketRef, tripId]);
+  }, [subscribe, joinTrip, leaveTrip, tripId]);
+
+  useEffect(() => {
+    if (!navigator.geolocation) { setGpsDenied(true); return; }
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        setUserPos([pos.coords.latitude, pos.coords.longitude]);
+        setGpsDenied(false);
+      },
+      () => setGpsDenied(true),
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, []);
+
+  const locateMe = () => {
+    if (!navigator.geolocation || !userPos) return;
+    window.dispatchEvent(new CustomEvent('locate-user', { detail: userPos }));
+  };
 
   const StatusIcon = STATUS_SEQUENCE.find(s => s.status === tripStatus)?.icon || Clock;
   const progress = trip?.tripProgress !== undefined ? Math.round(trip.tripProgress) : liveProgress;
@@ -125,10 +137,18 @@ export default function ParticipantTrack() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Live Tracking</h1>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Live Bus Tracking</h1>
           <p className="text-muted-foreground">Real-time shuttle location</p>
         </div>
         <div className="flex items-center gap-2">
+          {gpsDenied && (
+            <span className="text-xs text-muted-foreground hidden sm:inline">Location permission off</span>
+          )}
+          {userPos && (
+            <Button variant="outline" size="sm" onClick={locateMe} title="Center on my location">
+              <Locate className="mr-1.5 h-4 w-4 text-blue-600" /> My position
+            </Button>
+          )}
           <Badge className={`${getStatusColor(tripStatus)} self-start px-4 py-1.5 text-sm`}>
             <StatusIcon className="mr-1.5 h-4 w-4" />
             {statusLabel || tripStatus.replace('_', ' ')}
@@ -179,6 +199,7 @@ export default function ParticipantTrack() {
           <Card className="overflow-hidden">
             <TrackingMap
               shuttlePosition={livePos}
+              userPosition={userPos}
               origin={originPoint}
               destination={destPoint}
               stops={stopPoints}

@@ -1,21 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { reservationsApi } from '@/services/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
 import QRCode from 'qrcode';
-import { Calendar, MapPin, Bus, XCircle, Ticket, Users, Clock, AlertTriangle } from 'lucide-react';
+import { Calendar, MapPin, Bus, XCircle, Ticket, Users, Clock, AlertTriangle, Navigation } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 function SafeQRCode({ value, size }: { value: string; size: number }) {
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | undefined>(undefined);
   const [qrError, setQrError] = useState(false);
   useEffect(() => {
     let mounted = true;
     QRCode.toDataURL(value, { width: size, errorCorrectionLevel: 'L', margin: 1 })
-      .then((url) => { if (mounted) setQrDataUrl(url); })
+      .then((url: string) => { if (mounted) setQrDataUrl(url); })
       .catch(() => { if (mounted) setQrError(true); });
     return () => { mounted = false; };
   }, [value, size]);
@@ -48,6 +49,7 @@ const reservationStatusLabel = (status: string) => {
 
 export default function MyTickets() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: myReservations, isLoading } = useQuery({
     queryKey: ['my-reservations'],
@@ -89,7 +91,13 @@ export default function MyTickets() {
       ) : (
         <div className="space-y-3">
           {reservations.map((r: any) => (
-            <Card key={r.id} className={r.status === 'CANCELLED' ? 'opacity-60' : ''}>
+            <Card
+              key={r.id}
+              className={`${r.status === 'CANCELLED' ? 'opacity-60' : ''} ${r.trip?.id ? 'cursor-pointer transition-shadow hover:shadow-md' : ''}`}
+              onClick={() => {
+                if (r.trip?.id) navigate(`/participant/track/${r.trip.id}`);
+              }}
+            >
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0 space-y-1.5">
@@ -116,6 +124,11 @@ export default function MyTickets() {
                         )}
                       </div>
                     )}
+                    {r.trip?.id && r.status !== 'CANCELLED' && (
+                      <div className="flex items-center gap-1 text-xs text-blue-600">
+                        <Navigation className="h-3 w-3" /> Track bus
+                      </div>
+                    )}
                     {r.waitingListEntry?.status === 'PENDING' && (
                       <div className="flex items-center gap-1 text-xs text-amber-600">
                         <AlertTriangle className="h-3 w-3" />
@@ -132,7 +145,7 @@ export default function MyTickets() {
                     <span className="font-mono text-[10px] text-muted-foreground">{r.reservationCode}</span>
                     {['PENDING', 'CONFIRMED'].includes(r.status) && (
                       <Button variant="ghost" size="sm" className="h-6 text-[11px] text-red-600 px-1"
-                        onClick={() => cancelMutation.mutate(r.id)}>
+                        onClick={(e) => { e.stopPropagation(); cancelMutation.mutate(r.id); }}>
                         <XCircle className="mr-0.5 h-3 w-3" /> Cancel
                       </Button>
                     )}
