@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { supabase } from '@/lib/supabase';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const DEFAULT_API_URL = 'https://hakim-nadir-5.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL || DEFAULT_API_URL;
 
 export const api = axios.create({
   baseURL: API_URL,
