@@ -1,8 +1,8 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 
-const prodUrl = process.env.RENDER_EXTERNAL_URL || 'https://smart-shuttle-api.onrender.com';
+const prodUrl = process.env.RENDER_EXTERNAL_URL || 'https://hakim-nadir-5.onrender.com';
 const prodServer = prodUrl.includes('localhost')
-  ? { url: 'https://smart-shuttle-api.onrender.com', description: 'Production server' }
+  ? { url: 'https://hakim-nadir-5.onrender.com', description: 'Production server' }
   : { url: prodUrl, description: 'Production server' };
 
 const options: swaggerJsdoc.Options = {

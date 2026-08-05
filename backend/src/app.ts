@@ -39,7 +39,9 @@ app.use(cors({
     if (!origin || config.allowedOrigins.some(o => origin.startsWith(o) || o === '*')) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      const err = new Error('Not allowed by CORS') as any;
+      err.statusCode = 403;
+      callback(err);
     }
   },
   credentials: true,

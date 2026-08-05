@@ -51,6 +51,14 @@ export const errorHandler = (err: Error, _req: Request, res: Response, _next: Ne
     }
   }
 
+  const statusCode = (err as any).statusCode;
+  if (statusCode) {
+    return res.status(statusCode).json({
+      status: 'error',
+      message: err.message,
+    });
+  }
+
   return res.status(500).json({
     status: 'error',
     message: 'Internal server error',
