@@ -105,33 +105,35 @@ export default function ScanQr() {
       let perm: PermissionStatus | null = null;
       try { perm = await navigator.permissions.query({ name: 'camera' as PermissionName }); } catch {}
       if (perm?.state === 'denied') {
-        setCameraError('Camera blocked in browser. Open chrome://settings/content/camera, remove localhost from "Block" list, then reload.');
+        setCameraError('Camera blocked in browser. Open your browser settings, allow camera for this site, then reload.');
         setPageState('camera-error');
         return;
       }
+      const describeError = (e: any) => `${e?.name || 'Error'}: ${e?.message || e?.toString() || 'Unknown'}`;
       try {
         const testStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         testStream.getTracks().forEach(t => t.stop());
       } catch (e: any) {
+        const name = e?.name || '';
         const msg = (e?.message || e?.toString() || '').toLowerCase();
-        if (msg.includes('permission') || msg.includes('notallowederror')) {
-          setCameraError('Camera permission denied by browser or system. In Windows: Settings → Privacy & security → Camera → ensure "Camera access" is ON for this browser.');
-        } else if (msg.includes('notfound') || msg.includes('devicenotfound')) {
-          setCameraError('Camera device not found. Check if another app (Zoom, Teams) is using it, or restart your computer.');
-        } else if (msg.includes('inuse') || msg.includes('notreadable') || msg.includes('trackstarterror')) {
-          setCameraError('Camera is busy. Close other apps using the camera (Zoom, Discord, OBS) and try again.');
+        if (name === 'NotAllowedError' || msg.includes('permission') || msg.includes('notallowederror')) {
+          setCameraError('Camera permission denied. On the phone: allow camera access when prompted (Settings → Camera permission).');
+        } else if (name === 'NotFoundError' || msg.includes('notfound') || msg.includes('devicenotfound')) {
+          setCameraError('Camera device not found. Check the camera is not disabled in your phone settings.');
+        } else if (name === 'NotReadableError' || msg.includes('inuse') || msg.includes('notreadable') || msg.includes('trackstarterror')) {
+          setCameraError('Camera is busy. Close other apps using the camera and reload the page.');
         } else {
-          setCameraError(`Camera error: ${e?.message || e?.toString() || 'Unknown error'}`);
+          setCameraError(`Camera error: ${describeError(e)}`);
         }
         setPageState('camera-error');
         return;
       }
+      await new Promise(r => setTimeout(r, 300));
       const scanner = new Html5Qrcode('qr-reader-container');
       scannerRef.current = scanner;
       const config = {
         fps: 10,
         qrbox: { width: 360, height: 360 },
-        aspectRatio: 1.0,
         experimentalFeatures: { useBarCodeDetectorIfSupported: true },
       };
        const onScan = (decodedText: string) => {
@@ -140,19 +142,21 @@ export default function ScanQr() {
          handleScan(decodedText);
        };
       let lastErr = '';
-      const facingModes: MediaTrackConstraints[] = [
-        { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
-        { facingMode: { ideal: 'user' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      const facingModes: (string | MediaTrackConstraints)[] = [
+        { facingMode: { ideal: 'environment' } },
+        'environment',
+        { facingMode: { ideal: 'user' } },
+        'user',
       ];
       for (const constraints of facingModes) {
         try {
-          await scanner.start(constraints, config, onScan, () => {});
+          await scanner.start(constraints as any, config, onScan, () => {});
           if (mountedRef.current) setPageState('scanning');
           return;
-        } catch (e: any) { lastErr = e?.message || e?.toString() || 'Unknown error'; }
+        } catch (e: any) { lastErr = describeError(e); }
       }
       if (!mountedRef.current) return;
-      if (lastErr.toLowerCase().includes('permission') || lastErr.toLowerCase().includes('notallowederror')) {
+      if (lastErr.toLowerCase().includes('notallowed') || lastErr.toLowerCase().includes('permission')) {
         setCameraError('Camera permission blocked. Please allow camera access in your browser settings and try again.');
       } else {
         setCameraError(`Camera error: ${lastErr}`);
