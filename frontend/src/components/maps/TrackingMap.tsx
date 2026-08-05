@@ -8,6 +8,7 @@ import { Layers, Map as MapIcon, Sun, Moon, Maximize2, Minimize2 } from 'lucide-
 interface TrackingMapProps {
   shuttlePosition?: [number, number];
   shuttleHeading?: number;
+  shuttles?: { id: string; label: string; position: [number, number]; heading?: number }[];
   stops?: MapPoint[];
   origin?: MapPoint;
   destination?: MapPoint;
@@ -74,7 +75,7 @@ const TILE_KEYS = ['street', 'dark', 'satellite'] as const;
 type TileMode = (typeof TILE_KEYS)[number];
 
 export default function TrackingMap({
-  shuttlePosition, shuttleHeading, stops = [], origin, destination,
+  shuttlePosition, shuttleHeading, shuttles = [], stops = [], origin, destination,
   routePath, onMapReady, height = '400px', zoom = 13,
   showControls = true, showTraffic: _showTraffic = false,
   showSatellite: initialSatellite = false,
@@ -82,6 +83,7 @@ export default function TrackingMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const shuttleMarkerRef = useRef<L.Marker | null>(null);
+  const multiShuttleRef = useRef<L.Marker[]>([]);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const routeLayerRef = useRef<L.Polyline | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
@@ -178,6 +180,24 @@ export default function TrackingMap({
     }
     map.panTo(pos);
   }, [shuttlePosition, shuttleHeading, mapReady]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+    multiShuttleRef.current.forEach(m => m.remove());
+    multiShuttleRef.current = [];
+    if (shuttles.length > 0) {
+      const bounds = L.latLngBounds([]);
+      shuttles.forEach((s) => {
+        const pos = L.latLng(s.position[0], s.position[1]);
+        const marker = L.marker(pos, { icon: createShuttleIcon(s.heading || 0), zIndexOffset: 1000 }).addTo(map);
+        marker.bindPopup(`<strong>${s.label}</strong><br/><span style="font-size:0.8rem;color:#666">${s.position[0].toFixed(6)}, ${s.position[1].toFixed(6)}</span>`, { autoClose: false });
+        multiShuttleRef.current.push(marker);
+        bounds.extend(pos);
+      });
+      map.fitBounds(bounds.pad(0.2));
+    }
+  }, [shuttles, mapReady]);
 
   const toggleFullscreen = () => {
     if (!outerRef.current) return;
