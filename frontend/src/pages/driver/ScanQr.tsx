@@ -81,6 +81,27 @@ export default function ScanQr() {
     }
   };
 
+  const scanFromImage = async (file: File) => {
+    if (!mountedRef.current) return;
+    setPageState('validating');
+    const holder = document.createElement('div');
+    holder.id = 'scan-file-container';
+    holder.style.cssText = 'position:fixed;left:-9999px;top:0;width:320px;height:320px;';
+    document.body.appendChild(holder);
+    const tmpScanner = new Html5Qrcode('scan-file-container');
+    try {
+      const decoded = await tmpScanner.scanFile(file, false);
+      try { tmpScanner.clear(); } catch {}
+      holder.remove();
+      handleScan(decoded);
+    } catch {
+      try { tmpScanner.clear(); } catch {}
+      holder.remove();
+      setCameraError('No QR code found in this image. Take a sharper, well-lit photo of the QR code.');
+      setPageState('camera-error');
+    }
+  };
+
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; scanStop(); };
@@ -167,6 +188,8 @@ export default function ScanQr() {
   }, [pageState]);
 
   const goBack = () => { scanStop(); navigate('/driver/tracking'); };
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (pageState === 'idle') {
     return (
@@ -380,9 +403,22 @@ export default function ScanQr() {
               <CameraOff className="mx-auto mb-2 h-10 w-10 text-red-400" />
               <p className="text-sm font-semibold text-red-300">{cameraError}</p>
               <p className="mt-2 text-xs text-white/50">Make sure no other app is using the camera. In Chrome/Edge: click the lock icon next to the URL, find "Camera" and set to "Allow", then reload the page.</p>
-              <div className="mt-5 flex justify-center gap-3">
-                <Button variant="outline" className="border-white/20 text-white hover:bg-white/10" onClick={scanStart}>Try Again</Button>
-                <Button variant="ghost" className="text-white/60 hover:text-white" onClick={goBack}>Back</Button>
+              <div className="mt-5 flex flex-col gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) scanFromImage(f); e.target.value = ''; }}
+                />
+                <Button size="lg" className="w-full gap-2" onClick={() => fileInputRef.current?.click()}>
+                  <CameraOff className="h-4 w-4" /> Scan a photo instead
+                </Button>
+                <div className="flex justify-center gap-3">
+                  <Button variant="outline" className="border-white/20 text-white hover:bg-white/10" onClick={scanStart}>Try Again</Button>
+                  <Button variant="ghost" className="text-white/60 hover:text-white" onClick={goBack}>Back</Button>
+                </div>
               </div>
             </div>
           )}
