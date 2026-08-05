@@ -1,5 +1,6 @@
 import prisma from '../config/database';
 import { AppError } from '../middleware/error.middleware';
+import { generateQrToken } from '../utils/jwt';
 
 export class TicketService {
   async getTicket(reservationId: string, userId: string, role: string) {
@@ -25,9 +26,22 @@ export class TicketService {
       throw new AppError('Access denied', 403);
     }
 
+    let qrCode = reservation.qrCode;
+    if (!qrCode && reservation.status !== 'CANCELLED' && reservation.status !== 'REJECTED') {
+      qrCode = generateQrToken({
+        sub: reservation.id,
+        code: reservation.reservationCode,
+        eventId: reservation.eventId,
+        participantId: reservation.participantId,
+        date: reservation.date,
+      });
+      await prisma.reservation.update({ where: { id: reservation.id }, data: { qrCode } });
+    }
+
     return {
       id: reservation.id,
       reservationCode: reservation.reservationCode,
+      qrCode,
       status: reservation.status,
       date: reservation.date,
       time: reservation.time,

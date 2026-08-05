@@ -138,8 +138,8 @@ export default function MyTickets() {
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
                     {r.qrCode && r.status !== 'CANCELLED' && (
-                      <div className="rounded bg-white p-0.5" title="Scan for check-in">
-                        <SafeQRCode value={r.qrCode} size={48} />
+                      <div className="rounded bg-white p-1" title="Scan for check-in">
+                        <SafeQRCode value={r.qrCode} size={88} />
                       </div>
                     )}
                     <span className="font-mono text-[10px] text-muted-foreground">{r.reservationCode}</span>

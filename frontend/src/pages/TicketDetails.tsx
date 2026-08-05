@@ -117,7 +117,7 @@ export default function TicketDetails() {
             </>
           ) : (
             <div className="bg-white p-4 rounded-lg">
-              <SafeQRCode value={t.reservationCode} size={200} />
+              <SafeQRCode value={t.qrCode} size={200} />
               <p className="text-center text-xs text-muted-foreground mt-2">{t.reservationCode}</p>
             </div>
           )}

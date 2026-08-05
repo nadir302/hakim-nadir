@@ -165,6 +165,6 @@ export const ticketsApi = {
 };
 
 export const driverApi = {
-  scanQR: (token: string) => api.post('/driver/scan', { token }),
-  validateBoarding: (reservationId: string) => api.post('/driver/validate-boarding', { reservationId }),
+  scanQR: (token: string) => api.post('/reservations/scan', { token }),
+  validateBoarding: (reservationId: string) => api.post('/reservations/validate-boarding', { reservationId }),
 };
