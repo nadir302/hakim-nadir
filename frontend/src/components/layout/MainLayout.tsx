@@ -30,7 +30,8 @@ const roleMenuItems: Record<string, { label: string; path: string; icon: any }[]
   ],
   EMPLOYEE: [
     { label: 'Dashboard', path: '/participant/dashboard', icon: LayoutDashboard },
-    { label: 'My Bookings', path: '/participant/bookings', icon: Ticket },
+    { label: 'My Bookings', path: '/participant/bookings', icon: Calendar },
+    { label: 'My Tickets', path: '/participant/tickets', icon: Ticket },
   ],
 };
 

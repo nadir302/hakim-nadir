@@ -36,6 +36,7 @@ import TicketDetails from '@/pages/TicketDetails';
 
 import ParticipantDashboard from '@/pages/participant/Dashboard';
 import ParticipantBookings from '@/pages/participant/Bookings';
+import ParticipantMyTickets from '@/pages/participant/MyTickets';
 import ParticipantTrack from '@/pages/participant/Track';
 import Profile from '@/pages/Profile';
 
@@ -112,6 +113,7 @@ export default function App() {
           <Route index element={<Navigate to="/participant/dashboard" />} />
           <Route path="dashboard" element={<ParticipantDashboard />} />
           <Route path="bookings" element={<ParticipantBookings />} />
+          <Route path="tickets" element={<ParticipantMyTickets />} />
           <Route path="track/:tripId" element={<ParticipantTrack />} />
         </Route>
 
